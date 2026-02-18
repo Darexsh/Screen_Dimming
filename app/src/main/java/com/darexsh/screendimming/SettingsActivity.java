@@ -3,10 +3,12 @@ package com.darexsh.screendimming;
 import android.Manifest;
 import android.content.Intent;
 import android.content.pm.PackageManager;
+import android.content.res.ColorStateList;
 import android.net.Uri;
 import android.os.Build;
 import android.os.Bundle;
 import android.provider.Settings;
+import android.graphics.Color;
 import android.graphics.Typeface;
 import android.text.SpannableString;
 import android.text.Spanned;
@@ -21,16 +23,34 @@ import androidx.appcompat.app.AlertDialog;
 import androidx.appcompat.app.AppCompatActivity;
 import androidx.appcompat.app.AppCompatDelegate;
 import androidx.core.app.NotificationManagerCompat;
+import androidx.core.graphics.Insets;
 import androidx.core.os.LocaleListCompat;
 import androidx.core.content.ContextCompat;
+import androidx.core.view.ViewCompat;
+import androidx.core.view.WindowInsetsCompat;
+
+import com.google.android.material.button.MaterialButton;
 
 public class SettingsActivity extends AppCompatActivity {
 
     private static final int REQUEST_NOTIFICATIONS_PERMISSION = 2101;
+    private static final int BUTTON_BG_SELECTED = Color.parseColor("#5A647A");
+    private static final int BUTTON_BG_UNSELECTED = Color.parseColor("#313847");
+    private static final int BUTTON_STROKE_SELECTED = Color.parseColor("#9AA8CC");
+    private static final int BUTTON_STROKE_UNSELECTED = Color.parseColor("#515A6B");
+    private static final int BUTTON_TEXT_SELECTED = Color.parseColor("#FFFFFFFF");
+    private static final int BUTTON_TEXT_UNSELECTED = Color.parseColor("#E6FFFFFF");
 
     private TextView overlayStatusValue;
     private TextView notificationStatusValue;
     private TextView currentLanguageValue;
+    private TextView currentFilterValue;
+    private MaterialButton filterBlackButton;
+    private MaterialButton filterWarmButton;
+    private MaterialButton filterRedButton;
+    private MaterialButton filterBlueButton;
+    private MaterialButton englishLanguageButton;
+    private MaterialButton germanLanguageButton;
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
@@ -41,23 +61,54 @@ public class SettingsActivity extends AppCompatActivity {
         overlayStatusValue = findViewById(R.id.overlayStatusValue);
         notificationStatusValue = findViewById(R.id.notificationStatusValue);
         currentLanguageValue = findViewById(R.id.currentLanguageValue);
+        currentFilterValue = findViewById(R.id.currentFilterValue);
         Button checkButton = findViewById(R.id.checkOverlayButton);
         Button openSettingsButton = findViewById(R.id.openOverlaySettingsButton);
         Button grantNotificationButton = findViewById(R.id.grantNotificationButton);
-        Button englishLanguageButton = findViewById(R.id.englishLanguageButton);
-        Button germanLanguageButton = findViewById(R.id.germanLanguageButton);
+        filterBlackButton = findViewById(R.id.filterBlackButton);
+        filterWarmButton = findViewById(R.id.filterWarmButton);
+        filterRedButton = findViewById(R.id.filterRedButton);
+        filterBlueButton = findViewById(R.id.filterBlueButton);
+        englishLanguageButton = findViewById(R.id.englishLanguageButton);
+        germanLanguageButton = findViewById(R.id.germanLanguageButton);
         TextView settingsInfoButton = findViewById(R.id.settingsInfoButton);
 
         checkButton.setOnClickListener(v -> refreshOverlayStatus());
         openSettingsButton.setOnClickListener(v -> openOverlayPermissionScreen());
         grantNotificationButton.setOnClickListener(v -> onGrantNotificationPermissionClicked());
+        filterBlackButton.setOnClickListener(v -> setOverlayFilter(OverlayPrefs.FILTER_BLACK));
+        filterWarmButton.setOnClickListener(v -> setOverlayFilter(OverlayPrefs.FILTER_WARM));
+        filterRedButton.setOnClickListener(v -> setOverlayFilter(OverlayPrefs.FILTER_RED));
+        filterBlueButton.setOnClickListener(v -> setOverlayFilter(OverlayPrefs.FILTER_BLUE));
         englishLanguageButton.setOnClickListener(v -> setAppLanguage("en"));
         germanLanguageButton.setOnClickListener(v -> setAppLanguage("de"));
         settingsInfoButton.setOnClickListener(v -> showAppInfoDialog());
 
+        applySystemInsets();
         refreshOverlayStatus();
         refreshNotificationStatus();
+        refreshFilterStatus();
         refreshLanguageStatus();
+    }
+
+    private void applySystemInsets() {
+        View root = findViewById(R.id.settingsRoot);
+        final int baseLeft = root.getPaddingLeft();
+        final int baseTop = root.getPaddingTop();
+        final int baseRight = root.getPaddingRight();
+        final int baseBottom = root.getPaddingBottom();
+
+        ViewCompat.setOnApplyWindowInsetsListener(root, (v, insets) -> {
+            Insets bars = insets.getInsets(WindowInsetsCompat.Type.systemBars());
+            v.setPadding(
+                    baseLeft + bars.left,
+                    baseTop + bars.top,
+                    baseRight + bars.right,
+                    baseBottom + bars.bottom
+            );
+            return insets;
+        });
+        ViewCompat.requestApplyInsets(root);
     }
 
     @Override
@@ -65,6 +116,7 @@ public class SettingsActivity extends AppCompatActivity {
         super.onResume();
         refreshOverlayStatus();
         refreshNotificationStatus();
+        refreshFilterStatus();
         refreshLanguageStatus();
     }
 
@@ -137,10 +189,55 @@ public class SettingsActivity extends AppCompatActivity {
 
     private void refreshLanguageStatus() {
         String languageTag = LanguagePrefs.getSavedLanguageTag(this);
-        String languageLabel = languageTag != null && languageTag.toLowerCase().startsWith("de")
+        boolean germanSelected = languageTag != null && languageTag.toLowerCase().startsWith("de");
+        String languageLabel = germanSelected
                 ? getString(R.string.language_german)
                 : getString(R.string.language_english);
         currentLanguageValue.setText(getString(R.string.current_language_format, languageLabel));
+        applySelectionStyle(englishLanguageButton, !germanSelected);
+        applySelectionStyle(germanLanguageButton, germanSelected);
+    }
+
+    private void refreshFilterStatus() {
+        int filterType = OverlayPrefs.getFilterType(this, OverlayPrefs.FILTER_BLACK);
+        currentFilterValue.setText(getString(R.string.current_filter_format, getFilterLabel(filterType)));
+        applySelectionStyle(filterBlackButton, filterType == OverlayPrefs.FILTER_BLACK);
+        applySelectionStyle(filterWarmButton, filterType == OverlayPrefs.FILTER_WARM);
+        applySelectionStyle(filterRedButton, filterType == OverlayPrefs.FILTER_RED);
+        applySelectionStyle(filterBlueButton, filterType == OverlayPrefs.FILTER_BLUE);
+    }
+
+    private void setOverlayFilter(int filterType) {
+        int sanitized = OverlayPrefs.sanitizeFilterType(filterType);
+        OverlayPrefs.setFilterType(this, sanitized);
+        refreshFilterStatus();
+        if (OverlayService.isRunning()) {
+            OverlayService.sendFilterUpdate(this, sanitized);
+        }
+    }
+
+    private String getFilterLabel(int filterType) {
+        switch (OverlayPrefs.sanitizeFilterType(filterType)) {
+            case OverlayPrefs.FILTER_WARM:
+                return getString(R.string.filter_warm);
+            case OverlayPrefs.FILTER_RED:
+                return getString(R.string.filter_red);
+            case OverlayPrefs.FILTER_BLUE:
+                return getString(R.string.filter_blue);
+            case OverlayPrefs.FILTER_BLACK:
+            default:
+                return getString(R.string.filter_black);
+        }
+    }
+
+    private void applySelectionStyle(MaterialButton button, boolean selected) {
+        if (button == null) {
+            return;
+        }
+        button.setBackgroundTintList(ColorStateList.valueOf(selected ? BUTTON_BG_SELECTED : BUTTON_BG_UNSELECTED));
+        button.setStrokeColor(ColorStateList.valueOf(selected ? BUTTON_STROKE_SELECTED : BUTTON_STROKE_UNSELECTED));
+        button.setTextColor(selected ? BUTTON_TEXT_SELECTED : BUTTON_TEXT_UNSELECTED);
+        button.setTypeface(Typeface.DEFAULT, selected ? Typeface.BOLD : Typeface.NORMAL);
     }
 
     private void setAppLanguage(String languageTag) {

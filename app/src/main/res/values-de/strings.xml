@@ -1,7 +1,7 @@
 <resources>
     <string name="app_name">Screen Dimming</string>
     <string name="title_text">Bildschirm Dimmung</string>
-    <string name="subtitle_text">Lege eine dunkle Überlagerung über alle Apps und passe die Intensität an.</string>
+    <string name="subtitle_text">Lege eine gedimmte Farb-Überlagerung über alle Apps und passe die Intensität an.</string>
     <string name="overlay_permission_granted">Overlay-Berechtigung erteilt</string>
     <string name="overlay_permission_missing">Overlay-Berechtigung ist noch nicht erteilt.</string>
     <string name="overlay_permission_dialog_title">Overlay-Berechtigung erforderlich</string>
@@ -31,7 +31,7 @@
     <string name="app_info_version_label">Version</string>
     <string name="app_info_name">Screen Dimming</string>
     <string name="app_info_version">Version %1$s</string>
-    <string name="app_info_description">Screen Dimming ist eine Android-App, die eine schwarze Überlagerung über alle Apps legt, um die Helligkeit unter das Systemminimum zu senken. Sie bietet schnelles Ein-/Ausschalten, einstellbare Intensität und Sicherheitsfunktionen, um eine Aussperrung zu vermeiden. Die Intensität kann auch direkt in der Benachrichtigungsleiste geändert und die Dimmung dort ausgeschaltet werden (nach der Aktivierung).</string>
+    <string name="app_info_description">Screen Dimming ist eine Android-App, die eine gedimmte Überlagerung über alle Apps legt, um die Helligkeit unter das Systemminimum zu senken. Sie bietet schnelles Ein-/Ausschalten, einstellbare Intensität, wählbare Farbfilter und Sicherheitsfunktionen, um eine Aussperrung zu vermeiden. Die Intensität kann auch direkt in der Benachrichtigungsleiste geändert und die Dimmung dort ausgeschaltet werden (nach der Aktivierung).</string>
     <string name="app_info_developer_label">Entwickler:</string>
     <string name="app_info_developer_name">Darexsh by Daniel Sichler</string>
     <string name="app_info_open_email">E-Mail schreiben</string>
@@ -44,6 +44,13 @@
     <string name="current_language_format">Aktuelle Sprache: %1$s</string>
     <string name="language_english">Englisch</string>
     <string name="language_german">Deutsch</string>
+    <string name="filter_section_title">Farbfilter</string>
+    <string name="current_filter_default">Aktueller Filter: Schwarz</string>
+    <string name="current_filter_format">Aktueller Filter: %1$s</string>
+    <string name="filter_black">Schwarz</string>
+    <string name="filter_warm">Warm</string>
+    <string name="filter_red">Rot</string>
+    <string name="filter_blue">Blau</string>
     <string name="check_status_button">Status prüfen</string>
     <string name="open_overlay_settings_button">Systemeinstellungen öffnen</string>
     <string name="settings_button_label">Einstellungen</string>

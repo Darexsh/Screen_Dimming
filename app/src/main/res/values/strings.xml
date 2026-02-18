@@ -1,7 +1,7 @@
 <resources>
     <string name="app_name">Screen Dimming</string>
     <string name="title_text">Screen Dimming</string>
-    <string name="subtitle_text">Add a black overlay across all apps and tune its intensity.</string>
+    <string name="subtitle_text">Add a dim color overlay across all apps and tune its intensity.</string>
     <string name="overlay_permission_granted">Overlay permission granted</string>
     <string name="overlay_permission_missing">Overlay permission not granted yet.</string>
     <string name="overlay_permission_dialog_title">Overlay permission required</string>
@@ -31,7 +31,7 @@
     <string name="app_info_version_label">Version</string>
     <string name="app_info_name">Screen Dimming</string>
     <string name="app_info_version">Version %1$s</string>
-    <string name="app_info_description">Screen Dimming is an Android app that places a black overlay across all apps to reduce brightness beyond the system minimum. It supports quick on/off control, adjustable intensity, and safety controls to prevent lockout. The intensity can also be changed directly in the notification panel and dimming can be turned off there (after activation).</string>
+    <string name="app_info_description">Screen Dimming is an Android app that places a dim overlay across all apps to reduce brightness beyond the system minimum. It supports quick on/off control, adjustable intensity, selectable color filters, and safety controls to prevent lockout. The intensity can also be changed directly in the notification panel and dimming can be turned off there (after activation).</string>
     <string name="app_info_developer_label">Developer:</string>
     <string name="app_info_developer_name">Darexsh by Daniel Sichler</string>
     <string name="app_info_open_email">Write email</string>
@@ -44,6 +44,13 @@
     <string name="current_language_format">Current language: %1$s</string>
     <string name="language_english">English</string>
     <string name="language_german">German</string>
+    <string name="filter_section_title">Color Filter</string>
+    <string name="current_filter_default">Current filter: Black</string>
+    <string name="current_filter_format">Current filter: %1$s</string>
+    <string name="filter_black">Black</string>
+    <string name="filter_warm">Warm</string>
+    <string name="filter_red">Red</string>
+    <string name="filter_blue">Blue</string>
     <string name="check_status_button">Check status</string>
     <string name="open_overlay_settings_button">Open system settings</string>
     <string name="settings_button_label">Settings</string>

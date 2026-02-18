@@ -15,6 +15,7 @@ public final class LanguagePrefs {
     }
 
     public static void applySavedLanguage(Context context) {
+        AppCompatDelegate.setDefaultNightMode(AppCompatDelegate.MODE_NIGHT_YES);
         String languageTag = getSavedLanguageTag(context);
         LocaleListCompat current = AppCompatDelegate.getApplicationLocales();
         String currentTags = current.toLanguageTags();

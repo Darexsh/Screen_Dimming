@@ -12,6 +12,9 @@ import android.graphics.Color;
 import android.graphics.PixelFormat;
 import android.os.Build;
 import android.os.IBinder;
+import android.os.VibrationEffect;
+import android.os.Vibrator;
+import android.os.VibratorManager;
 import android.provider.Settings;
 import android.view.MotionEvent;
 import android.view.Gravity;
@@ -25,6 +28,7 @@ public class OverlayService extends Service {
     private static final String ACTION_START = "com.darexsh.screendimming.action.START";
     private static final String ACTION_STOP = "com.darexsh.screendimming.action.STOP";
     private static final String ACTION_UPDATE_INTENSITY = "com.darexsh.screendimming.action.UPDATE_INTENSITY";
+    private static final String ACTION_UPDATE_FILTER = "com.darexsh.screendimming.action.UPDATE_FILTER";
     private static final String ACTION_DECREASE = "com.darexsh.screendimming.action.DECREASE";
     private static final String ACTION_INCREASE = "com.darexsh.screendimming.action.INCREASE";
     private static final String ACTION_OPEN_APP = "com.darexsh.screendimming.action.OPEN_APP";
@@ -32,6 +36,7 @@ public class OverlayService extends Service {
     public static final String EXTRA_RUNNING = "extra_running";
     public static final String EXTRA_CURRENT_INTENSITY = "extra_current_intensity";
     private static final String EXTRA_INTENSITY = "extra_intensity";
+    private static final String EXTRA_FILTER_TYPE = "extra_filter_type";
     private static final String NOTIFICATION_CHANNEL_ID = "screen_dimming_channel";
     private static final int NOTIFICATION_ID = 1001;
     private static final int NOTIFICATION_STEP = 5;
@@ -43,6 +48,7 @@ public class OverlayService extends Service {
     private View dimView;
     private View unlockGestureView;
     private int currentIntensity = 70;
+    private int currentFilterType = OverlayPrefs.FILTER_BLACK;
     private long firstTapTs = 0L;
     private int tapCount = 0;
 
@@ -66,6 +72,13 @@ public class OverlayService extends Service {
         startServiceCompat(context, intent, false);
     }
 
+    public static void sendFilterUpdate(Context context, int filterType) {
+        Intent intent = new Intent(context, OverlayService.class);
+        intent.setAction(ACTION_UPDATE_FILTER);
+        intent.putExtra(EXTRA_FILTER_TYPE, OverlayPrefs.sanitizeFilterType(filterType));
+        startServiceCompat(context, intent, false);
+    }
+
     public static boolean isRunning() {
         return running;
     }
@@ -74,6 +87,14 @@ public class OverlayService extends Service {
     public int onStartCommand(Intent intent, int flags, int startId) {
         String action = intent != null ? intent.getAction() : null;
         int intensity = sanitizeIntensity(intent != null ? intent.getIntExtra(EXTRA_INTENSITY, 70) : 70);
+        int filterType = OverlayPrefs.sanitizeFilterType(
+                intent != null
+                        ? intent.getIntExtra(
+                        EXTRA_FILTER_TYPE,
+                        OverlayPrefs.getFilterType(this, OverlayPrefs.FILTER_BLACK)
+                )
+                        : OverlayPrefs.getFilterType(this, OverlayPrefs.FILTER_BLACK)
+        );
 
         if (ACTION_STOP.equals(action)) {
             teardownOverlay();
@@ -92,8 +113,10 @@ public class OverlayService extends Service {
             startForegroundIfNeeded();
             setupOverlayIfNeeded();
             setupUnlockGestureIfNeeded();
+            applyFilter(filterType);
             applyIntensity(intensity);
             OverlayPrefs.setIntensityPercent(this, intensity);
+            OverlayPrefs.setFilterType(this, filterType);
             updateNotification();
             return START_STICKY;
         }
@@ -106,6 +129,18 @@ public class OverlayService extends Service {
             startForegroundIfNeeded();
             applyIntensity(intensity);
             OverlayPrefs.setIntensityPercent(this, intensity);
+            updateNotification();
+            return START_STICKY;
+        }
+
+        if (ACTION_UPDATE_FILTER.equals(action)) {
+            OverlayPrefs.setFilterType(this, filterType);
+            if (!running || dimView == null) {
+                currentFilterType = filterType;
+                return START_NOT_STICKY;
+            }
+            startForegroundIfNeeded();
+            applyFilter(filterType);
             updateNotification();
             return START_STICKY;
         }
@@ -190,6 +225,7 @@ public class OverlayService extends Service {
             } else {
                 tapCount++;
                 if (tapCount >= 3) {
+                    vibrateUnlockFeedback();
                     stop(this);
                     tapCount = 0;
                     firstTapTs = 0L;
@@ -325,8 +361,14 @@ public class OverlayService extends Service {
         currentIntensity = sanitizeIntensity(intensityPercent);
         int alpha = Math.round((currentIntensity / 100f) * 255f);
         dimView.setAlpha(1f);
-        dimView.setBackgroundColor(Color.argb(alpha, 0, 0, 0));
+        int color = getFilterColor(currentFilterType);
+        dimView.setBackgroundColor((alpha << 24) | (color & 0x00FFFFFF));
         broadcastStateChanged(running);
+    }
+
+    private void applyFilter(int filterType) {
+        currentFilterType = OverlayPrefs.sanitizeFilterType(filterType);
+        applyIntensity(currentIntensity);
     }
 
     private void updateNotification() {
@@ -342,6 +384,52 @@ public class OverlayService extends Service {
 
     private static int sanitizeIntensity(int intensityPercent) {
         return Math.max(0, Math.min(99, intensityPercent));
+    }
+
+    private static int getFilterColor(int filterType) {
+        switch (OverlayPrefs.sanitizeFilterType(filterType)) {
+            case OverlayPrefs.FILTER_WARM:
+                return Color.rgb(48, 24, 0);
+            case OverlayPrefs.FILTER_RED:
+                return Color.rgb(38, 0, 0);
+            case OverlayPrefs.FILTER_BLUE:
+                return Color.rgb(0, 14, 34);
+            case OverlayPrefs.FILTER_BLACK:
+            default:
+                return Color.rgb(0, 0, 0);
+        }
+    }
+
+    private void vibrateUnlockFeedback() {
+        try {
+            Vibrator vibrator;
+            if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.S) {
+                VibratorManager manager = getSystemService(VibratorManager.class);
+                vibrator = manager != null ? manager.getDefaultVibrator() : null;
+                if (vibrator == null) {
+                    vibrator = (Vibrator) getSystemService(VIBRATOR_SERVICE);
+                }
+            } else {
+                vibrator = (Vibrator) getSystemService(VIBRATOR_SERVICE);
+            }
+            if (vibrator == null || !vibrator.hasVibrator()) {
+                return;
+            }
+
+            if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.O) {
+                vibrator.vibrate(
+                        VibrationEffect.createWaveform(
+                                new long[]{0L, 90L, 40L, 130L},
+                                new int[]{0, 255, 0, 255},
+                                -1
+                        )
+                );
+            } else {
+                vibrator.vibrate(220L);
+            }
+        } catch (RuntimeException ignored) {
+            // Ignore vibration errors; unlock must still continue.
+        }
     }
 
     private void broadcastStateChanged(boolean isRunning) {
