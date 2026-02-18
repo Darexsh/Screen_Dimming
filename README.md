@@ -27,14 +27,14 @@
 🚀 About the Project
 ==============
 
-**Screen Dimming** is an Android application that places a black overlay across all apps to reduce brightness below the system minimum. It includes quick controls, notification actions, and safety mechanisms to avoid lockout.
+**Screen Dimming** is an Android application that places a dim color overlay across all apps to reduce brightness below the system minimum. It includes quick controls, notification actions, color filters, and safety mechanisms to avoid lockout.
 
 * * *
 
 ✨ Features
 ----------
 
-* 🌙 **System-Wide Dimming Overlay**: Adds a fullscreen black overlay over all apps using a foreground service.
+* 🌙 **System-Wide Dimming Overlay**: Adds a fullscreen dim color overlay over all apps using a foreground service.
 
 * ☀️➡️🌙 **Animated Main Toggle**: Large round Sun/Moon control with smooth transition animation.
 
@@ -44,6 +44,8 @@
 
 * 👆 **Emergency Unlock Gesture**: Triple-tap in the top-right area to turn dimming off.
 
+* 📳 **Haptic Emergency Feedback**: Triple-tap unlock gives clear vibration feedback.
+
 * 🔔 **Notification Controls**: Change intensity (`-5%` / `+5%`) or turn dimming off directly from the notification panel.
 
 * ⚙️ **Settings Screen**:
@@ -52,11 +54,17 @@
 
   * Notification permission status + button to grant/open system settings.
 
+  * Color filter selection (Black, Warm, Red, Blue) with active selection highlight.
+
   * Language selection (English/German).
 
   * App Info dialog with version, developer, and action buttons.
 
 * 🌍 **Bilingual UI**: Full English and German support.
+
+* 🌑 **Forced Dark Theme**: App UI is locked to dark mode.
+
+* 📱 **Portrait-Only UI**: Main and Settings screens stay in portrait orientation.
 
 
 * * *
@@ -124,11 +132,11 @@
 
 4. **Emergency Disable**:
 
-    * Triple-tap the top-right unlock area.
+    * Triple-tap the top-right unlock area (with vibration feedback).
 
 5. **Manage Settings**:
 
-    * Open Settings for permission checks, language, and app info.
+    * Open Settings for permission checks, color filter selection, language, and app info.
 
 
 * * *
@@ -142,6 +150,8 @@
 
 * 🧩 **Foreground Service (`FOREGROUND_SERVICE`, `FOREGROUND_SERVICE_SPECIAL_USE`)**: Required to keep dimming active across apps.
 
+* 📳 **Vibration (`VIBRATE`)**: Used for emergency triple-tap unlock haptic feedback.
+
 
 * * *
 
@@ -152,7 +162,7 @@
 
 * 📱 Uses a dedicated **Foreground Service** for overlay rendering.
 
-* 🎚️ Intensity and language preferences are stored locally via **SharedPreferences**.
+* 🎚️ Intensity, color filter, and language preferences are stored locally via **SharedPreferences**.
 
 * 🔔 Notification controls are implemented with **NotificationCompat** actions.
 
