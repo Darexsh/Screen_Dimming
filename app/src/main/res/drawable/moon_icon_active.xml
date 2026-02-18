@@ -1,0 +1,53 @@
+<?xml version="1.0" encoding="utf-8"?>
+<layer-list xmlns:android="http://schemas.android.com/apk/res/android">
+    <item
+        android:width="112dp"
+        android:height="112dp"
+        android:gravity="center">
+        <shape android:shape="oval">
+            <solid android:color="#FFF2E5B2" />
+        </shape>
+    </item>
+
+    <item
+        android:width="112dp"
+        android:height="112dp"
+        android:gravity="center"
+        android:left="36dp">
+        <shape android:shape="oval">
+            <solid android:color="#FF202836" />
+        </shape>
+    </item>
+
+    <item
+        android:width="16dp"
+        android:height="16dp"
+        android:gravity="end|top"
+        android:right="30dp"
+        android:top="30dp"
+        android:drawable="@drawable/star_sparkle_light" />
+
+    <item
+        android:width="12dp"
+        android:height="12dp"
+        android:gravity="end|top"
+        android:right="54dp"
+        android:top="50dp"
+        android:drawable="@drawable/star_sparkle_light" />
+
+    <item
+        android:width="14dp"
+        android:height="14dp"
+        android:gravity="end|bottom"
+        android:right="40dp"
+        android:bottom="25dp"
+        android:drawable="@drawable/star_sparkle_light" />
+
+    <item
+        android:width="10dp"
+        android:height="10dp"
+        android:gravity="end|top"
+        android:right="60dp"
+        android:top="15dp"
+        android:drawable="@drawable/star_sparkle_light" />
+</layer-list>
