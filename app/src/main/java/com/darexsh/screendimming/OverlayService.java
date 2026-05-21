@@ -5,18 +5,16 @@ import android.app.Notification;
 import android.app.NotificationChannel;
 import android.app.NotificationManager;
 import android.app.Service;
+import android.content.BroadcastReceiver;
 import android.content.Context;
 import android.content.Intent;
+import android.content.IntentFilter;
 import android.content.pm.ServiceInfo;
 import android.graphics.Color;
 import android.graphics.PixelFormat;
 import android.os.Build;
 import android.os.IBinder;
-import android.os.VibrationEffect;
-import android.os.Vibrator;
-import android.os.VibratorManager;
 import android.provider.Settings;
-import android.view.MotionEvent;
 import android.view.Gravity;
 import android.view.View;
 import android.view.WindowManager;
@@ -40,17 +38,25 @@ public class OverlayService extends Service {
     private static final String NOTIFICATION_CHANNEL_ID = "screen_dimming_channel";
     private static final int NOTIFICATION_ID = 1001;
     private static final int NOTIFICATION_STEP = 5;
-    private static final long TRIPLE_TAP_WINDOW_MS = 900L;
 
     private static volatile boolean running;
 
     private WindowManager windowManager;
     private View dimView;
-    private View unlockGestureView;
     private int currentIntensity = 70;
     private int currentFilterType = OverlayPrefs.FILTER_BLACK;
-    private long firstTapTs = 0L;
-    private int tapCount = 0;
+    private boolean screenStateReceiverRegistered;
+    private final BroadcastReceiver screenStateReceiver = new BroadcastReceiver() {
+        @Override
+        public void onReceive(Context context, Intent intent) {
+            if (intent == null) {
+                return;
+            }
+            if (Intent.ACTION_SCREEN_OFF.equals(intent.getAction())) {
+                stop(context);
+            }
+        }
+    };
 
     public static void start(Context context, int intensityPercent) {
         Intent intent = new Intent(context, OverlayService.class);
@@ -112,7 +118,6 @@ public class OverlayService extends Service {
         if (ACTION_START.equals(action)) {
             startForegroundIfNeeded();
             setupOverlayIfNeeded();
-            setupUnlockGestureIfNeeded();
             applyFilter(filterType);
             applyIntensity(intensity);
             OverlayPrefs.setIntensityPercent(this, intensity);
@@ -198,58 +203,13 @@ public class OverlayService extends Service {
 
         try {
             windowManager.addView(dimView, params);
+            registerScreenStateReceiverIfNeeded();
             running = true;
             broadcastStateChanged(true);
         } catch (RuntimeException e) {
             dimView = null;
             running = false;
             stopSelf();
-        }
-    }
-
-    private void setupUnlockGestureIfNeeded() {
-        if (unlockGestureView != null || windowManager == null) {
-            return;
-        }
-
-        unlockGestureView = new View(this);
-        unlockGestureView.setBackgroundColor(Color.TRANSPARENT);
-        unlockGestureView.setOnTouchListener((v, event) -> {
-            if (event.getAction() != MotionEvent.ACTION_DOWN) {
-                return false;
-            }
-            long now = System.currentTimeMillis();
-            if (now - firstTapTs > TRIPLE_TAP_WINDOW_MS) {
-                firstTapTs = now;
-                tapCount = 1;
-            } else {
-                tapCount++;
-                if (tapCount >= 3) {
-                    vibrateUnlockFeedback();
-                    stop(this);
-                    tapCount = 0;
-                    firstTapTs = 0L;
-                    return true;
-                }
-            }
-            return true;
-        });
-
-        WindowManager.LayoutParams params = new WindowManager.LayoutParams(
-                dpToPx(52),
-                dpToPx(52),
-                WindowManager.LayoutParams.TYPE_APPLICATION_OVERLAY,
-                WindowManager.LayoutParams.FLAG_NOT_FOCUSABLE | WindowManager.LayoutParams.FLAG_LAYOUT_IN_SCREEN,
-                PixelFormat.TRANSLUCENT
-        );
-        params.gravity = Gravity.TOP | Gravity.END;
-        params.x = dpToPx(10);
-        params.y = dpToPx(10);
-
-        try {
-            windowManager.addView(unlockGestureView, params);
-        } catch (RuntimeException ignored) {
-            unlockGestureView = null;
         }
     }
 
@@ -341,13 +301,10 @@ public class OverlayService extends Service {
     }
 
     private void teardownOverlay() {
-        if (windowManager != null && unlockGestureView != null) {
-            windowManager.removeView(unlockGestureView);
-        }
+        unregisterScreenStateReceiverIfNeeded();
         if (windowManager != null && dimView != null) {
             windowManager.removeView(dimView);
         }
-        unlockGestureView = null;
         dimView = null;
         windowManager = null;
         running = false;
@@ -400,38 +357,6 @@ public class OverlayService extends Service {
         }
     }
 
-    private void vibrateUnlockFeedback() {
-        try {
-            Vibrator vibrator;
-            if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.S) {
-                VibratorManager manager = getSystemService(VibratorManager.class);
-                vibrator = manager != null ? manager.getDefaultVibrator() : null;
-                if (vibrator == null) {
-                    vibrator = (Vibrator) getSystemService(VIBRATOR_SERVICE);
-                }
-            } else {
-                vibrator = (Vibrator) getSystemService(VIBRATOR_SERVICE);
-            }
-            if (vibrator == null || !vibrator.hasVibrator()) {
-                return;
-            }
-
-            if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.O) {
-                vibrator.vibrate(
-                        VibrationEffect.createWaveform(
-                                new long[]{0L, 90L, 40L, 130L},
-                                new int[]{0, 255, 0, 255},
-                                -1
-                        )
-                );
-            } else {
-                vibrator.vibrate(220L);
-            }
-        } catch (RuntimeException ignored) {
-            // Ignore vibration errors; unlock must still continue.
-        }
-    }
-
     private void broadcastStateChanged(boolean isRunning) {
         Intent stateIntent = new Intent(ACTION_STATE_CHANGED);
         stateIntent.setPackage(getPackageName());
@@ -450,5 +375,26 @@ public class OverlayService extends Service {
         } else {
             context.startService(intent);
         }
+    }
+
+    private void registerScreenStateReceiverIfNeeded() {
+        if (screenStateReceiverRegistered) {
+            return;
+        }
+        IntentFilter filter = new IntentFilter(Intent.ACTION_SCREEN_OFF);
+        registerReceiver(screenStateReceiver, filter);
+        screenStateReceiverRegistered = true;
+    }
+
+    private void unregisterScreenStateReceiverIfNeeded() {
+        if (!screenStateReceiverRegistered) {
+            return;
+        }
+        try {
+            unregisterReceiver(screenStateReceiver);
+        } catch (IllegalArgumentException ignored) {
+            // Receiver already unregistered.
+        }
+        screenStateReceiverRegistered = false;
     }
 }

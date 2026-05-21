@@ -37,11 +37,14 @@
     <string name="app_info_open_email">E-Mail schreiben</string>
     <string name="app_info_open_github">Soziale Medien öffnen</string>
     <string name="app_info_open_github_profile">GitHub-Profil</string>
-    <string name="app_info_open_coffee">Kaffee spendieren</string>
+    <string name="app_info_open_telegram">Telegram-Bot öffnen</string>
+    <string name="app_info_privacy_policy">Datenschutz</string>
+    <string name="app_info_open_coffee">Entwicklung unterstützen</string>
     <string name="dialog_ok">OK</string>
     <string name="language_section_title">Sprache</string>
-    <string name="current_language_default">Aktuelle Sprache: Deutsch</string>
+    <string name="current_language_default">Aktuelle Sprache: Systemstandard</string>
     <string name="current_language_format">Aktuelle Sprache: %1$s</string>
+    <string name="language_system_default">Systemstandard</string>
     <string name="language_english">Englisch</string>
     <string name="language_german">Deutsch</string>
     <string name="filter_section_title">Farbfilter</string>
@@ -60,7 +63,7 @@
     <string name="dimming_off">Dimmung ist AUS</string>
     <string name="dimming_intensity_initial">Dimm-Intensität: 70%</string>
     <string name="dimming_intensity_format">Dimm-Intensität: %1$d%%</string>
-    <string name="intensity_safety_note">Maximum ist 99%. 100% ist gesperrt, da der Bildschirm vollständig schwarz werden und Nutzer aussperren könnte.\n\nIn Notfällen die obere rechte Ecke dreimal antippen, um die Dimmung auszuschalten.</string>
+    <string name="intensity_safety_note">Maximum ist 99%. 100% ist gesperrt, da der Bildschirm vollständig schwarz werden und Nutzer aussperren könnte.\n\nIm Notfall die dauerhafte Benachrichtigung öffnen und auf Ausschalten tippen. Die Dimmung wird außerdem automatisch beendet, sobald der Bildschirm ausgeschaltet wird.</string>
     <string name="notification_channel_name">Bildschirmdimmung</string>
     <string name="notification_channel_description">Hält die Dimmung über alle Apps hinweg aktiv</string>
     <string name="notification_title">Bildschirmdimmung ist aktiv</string>

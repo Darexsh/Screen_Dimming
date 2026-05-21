@@ -49,6 +49,7 @@ public class SettingsActivity extends AppCompatActivity {
     private MaterialButton filterWarmButton;
     private MaterialButton filterRedButton;
     private MaterialButton filterBlueButton;
+    private MaterialButton systemLanguageButton;
     private MaterialButton englishLanguageButton;
     private MaterialButton germanLanguageButton;
 
@@ -69,6 +70,7 @@ public class SettingsActivity extends AppCompatActivity {
         filterWarmButton = findViewById(R.id.filterWarmButton);
         filterRedButton = findViewById(R.id.filterRedButton);
         filterBlueButton = findViewById(R.id.filterBlueButton);
+        systemLanguageButton = findViewById(R.id.systemLanguageButton);
         englishLanguageButton = findViewById(R.id.englishLanguageButton);
         germanLanguageButton = findViewById(R.id.germanLanguageButton);
         TextView settingsInfoButton = findViewById(R.id.settingsInfoButton);
@@ -80,6 +82,7 @@ public class SettingsActivity extends AppCompatActivity {
         filterWarmButton.setOnClickListener(v -> setOverlayFilter(OverlayPrefs.FILTER_WARM));
         filterRedButton.setOnClickListener(v -> setOverlayFilter(OverlayPrefs.FILTER_RED));
         filterBlueButton.setOnClickListener(v -> setOverlayFilter(OverlayPrefs.FILTER_BLUE));
+        systemLanguageButton.setOnClickListener(v -> setAppLanguage(""));
         englishLanguageButton.setOnClickListener(v -> setAppLanguage("en"));
         germanLanguageButton.setOnClickListener(v -> setAppLanguage("de"));
         settingsInfoButton.setOnClickListener(v -> showAppInfoDialog());
@@ -189,12 +192,22 @@ public class SettingsActivity extends AppCompatActivity {
 
     private void refreshLanguageStatus() {
         String languageTag = LanguagePrefs.getSavedLanguageTag(this);
-        boolean germanSelected = languageTag != null && languageTag.toLowerCase().startsWith("de");
-        String languageLabel = germanSelected
-                ? getString(R.string.language_german)
-                : getString(R.string.language_english);
+        String normalized = languageTag == null ? "" : languageTag.trim().toLowerCase();
+        boolean systemSelected = normalized.isEmpty();
+        boolean germanSelected = !systemSelected && normalized.startsWith("de");
+        boolean englishSelected = !systemSelected && normalized.startsWith("en");
+
+        String languageLabel;
+        if (systemSelected) {
+            languageLabel = getString(R.string.language_system_default);
+        } else if (germanSelected) {
+            languageLabel = getString(R.string.language_german);
+        } else {
+            languageLabel = getString(R.string.language_english);
+        }
         currentLanguageValue.setText(getString(R.string.current_language_format, languageLabel));
-        applySelectionStyle(englishLanguageButton, !germanSelected);
+        applySelectionStyle(systemLanguageButton, systemSelected);
+        applySelectionStyle(englishLanguageButton, englishSelected);
         applySelectionStyle(germanLanguageButton, germanSelected);
     }
 
@@ -242,7 +255,9 @@ public class SettingsActivity extends AppCompatActivity {
 
     private void setAppLanguage(String languageTag) {
         LanguagePrefs.saveLanguageTag(this, languageTag);
-        LocaleListCompat locales = LocaleListCompat.forLanguageTags(languageTag);
+        LocaleListCompat locales = (languageTag == null || languageTag.trim().isEmpty())
+                ? LocaleListCompat.getEmptyLocaleList()
+                : LocaleListCompat.forLanguageTags(languageTag);
         AppCompatDelegate.setApplicationLocales(locales);
     }
 
@@ -274,7 +289,9 @@ public class SettingsActivity extends AppCompatActivity {
         TextView appDeveloper = content.findViewById(R.id.tv_app_developer);
         Button openEmail = content.findViewById(R.id.btn_open_email);
         Button openGithub = content.findViewById(R.id.btn_open_github);
+        Button openTelegram = content.findViewById(R.id.btn_open_telegram);
         Button openGithubProfile = content.findViewById(R.id.btn_open_github_profile);
+        Button openPrivacy = content.findViewById(R.id.btn_open_privacy);
         Button openCoffee = content.findViewById(R.id.btn_open_coffee);
 
         appName.setText(R.string.app_info_name);
@@ -310,8 +327,19 @@ public class SettingsActivity extends AppCompatActivity {
             startActivity(intent);
         });
 
+        openTelegram.setOnClickListener(v -> {
+            Intent intent = new Intent(Intent.ACTION_VIEW, Uri.parse("https://t.me/darexsh_bot"));
+            startActivity(intent);
+        });
+
         openGithubProfile.setOnClickListener(v -> {
             Intent intent = new Intent(Intent.ACTION_VIEW, Uri.parse("https://github.com/Darexsh"));
+            startActivity(intent);
+        });
+
+
+        openPrivacy.setOnClickListener(v -> {
+            Intent intent = new Intent(Intent.ACTION_VIEW, Uri.parse("https://github.com/Darexsh/Screen_Dimming/blob/main/PRIVACY_POLICY.md"));
             startActivity(intent);
         });
 
@@ -325,6 +353,9 @@ public class SettingsActivity extends AppCompatActivity {
                 .setView(content)
                 .setPositiveButton(R.string.dialog_ok, null)
                 .show();
+        if (dialog.getWindow() != null) {
+            dialog.getWindow().setBackgroundDrawableResource(R.drawable.bg_app_info_dialog);
+        }
         dialog.getButton(AlertDialog.BUTTON_POSITIVE)
                 .setTextColor(ContextCompat.getColor(this, R.color.ui_gray));
     }

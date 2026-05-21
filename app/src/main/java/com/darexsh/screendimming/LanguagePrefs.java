@@ -9,7 +9,7 @@ public final class LanguagePrefs {
 
     private static final String PREFS_NAME = "screen_dimming_language_prefs";
     private static final String KEY_LANGUAGE_TAG = "language_tag";
-    private static final String DEFAULT_LANGUAGE_TAG = "en";
+    private static final String DEFAULT_LANGUAGE_TAG = "";
 
     private LanguagePrefs() {
     }
@@ -17,10 +17,12 @@ public final class LanguagePrefs {
     public static void applySavedLanguage(Context context) {
         AppCompatDelegate.setDefaultNightMode(AppCompatDelegate.MODE_NIGHT_YES);
         String languageTag = getSavedLanguageTag(context);
-        LocaleListCompat current = AppCompatDelegate.getApplicationLocales();
-        String currentTags = current.toLanguageTags();
-        if (!languageTag.equalsIgnoreCase(currentTags)) {
-            AppCompatDelegate.setApplicationLocales(LocaleListCompat.forLanguageTags(languageTag));
+        LocaleListCompat targetLocales = languageTag == null || languageTag.trim().isEmpty()
+                ? LocaleListCompat.getEmptyLocaleList()
+                : LocaleListCompat.forLanguageTags(languageTag);
+        LocaleListCompat currentLocales = AppCompatDelegate.getApplicationLocales();
+        if (!targetLocales.toLanguageTags().equalsIgnoreCase(currentLocales.toLanguageTags())) {
+            AppCompatDelegate.setApplicationLocales(targetLocales);
         }
     }
 

@@ -45,11 +45,9 @@
 
 * 🔒 **Safety Protection**: 100% dimming is blocked to reduce risk of getting locked out.
 
-* 👆 **Emergency Unlock Gesture**: Triple-tap in the top-right area to turn dimming off.
-
-* 📳 **Haptic Emergency Feedback**: Triple-tap unlock gives clear vibration feedback.
-
 * 🔔 **Notification Controls**: Change intensity (`-5%` / `+5%`) or turn dimming off directly from the notification panel.
+
+* 📴 **Auto Safety Stop on Screen Off**: Dimming automatically turns off when the screen is turned off.
 
 * ⚙️ **Settings Screen**:
 
@@ -59,7 +57,7 @@
 
   * Color filter selection (Black, Warm, Red, Blue) with active selection highlight.
 
-  * Language selection (English/German).
+  * Language selection (System default/English/German).
 
   * App Info dialog with version, developer, and action buttons.
 
@@ -135,7 +133,8 @@
 
 4. **Emergency Disable**:
 
-    * Triple-tap the top-right unlock area (with vibration feedback).
+    * Use **Turn off** in the persistent notification.
+    * Dimming also turns off automatically when the screen is turned off.
 
 5. **Manage Settings**:
 
@@ -153,8 +152,6 @@
 
 * 🧩 **Foreground Service (`FOREGROUND_SERVICE`, `FOREGROUND_SERVICE_SPECIAL_USE`)**: Required to keep dimming active across apps.
 
-* 📳 **Vibration (`VIBRATE`)**: Used for emergency triple-tap unlock haptic feedback.
-
 
 * * *
 
@@ -171,6 +168,12 @@
 
 * 🌍 Runtime language switching via **AppCompatDelegate locales**.
 
+* * *
+
+🔒 Privacy
+----------
+
+Privacy policy: [PRIVACY_POLICY.md](PRIVACY_POLICY.md)
 
 * * *
 

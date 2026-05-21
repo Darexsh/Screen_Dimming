@@ -319,15 +319,13 @@
                 android:layout_width="match_parent"
                 android:layout_height="wrap_content"
                 android:layout_marginTop="14dp"
-                android:gravity="center_vertical"
-                android:orientation="horizontal">
+                android:orientation="vertical">
 
                 <com.google.android.material.button.MaterialButton
-                    android:id="@+id/englishLanguageButton"
-                    android:layout_width="0dp"
+                    android:id="@+id/systemLanguageButton"
+                    android:layout_width="match_parent"
                     android:layout_height="wrap_content"
-                    android:layout_weight="1"
-                    android:text="@string/language_english"
+                    android:text="@string/language_system_default"
                     android:textAllCaps="false"
                     android:textColor="#FFFFFFFF"
                     app:backgroundTint="#313847"
@@ -335,19 +333,40 @@
                     app:strokeColor="#515A6B"
                     app:strokeWidth="1dp" />
 
-                <com.google.android.material.button.MaterialButton
-                    android:id="@+id/germanLanguageButton"
-                    android:layout_width="0dp"
+                <LinearLayout
+                    android:layout_width="match_parent"
                     android:layout_height="wrap_content"
-                    android:layout_marginStart="10dp"
-                    android:layout_weight="1"
-                    android:text="@string/language_german"
-                    android:textAllCaps="false"
-                    android:textColor="#FFFFFFFF"
-                    app:backgroundTint="#4A4F5E"
-                    app:cornerRadius="12dp"
-                    app:strokeColor="#6A7285"
-                    app:strokeWidth="1dp" />
+                    android:layout_marginTop="10dp"
+                    android:gravity="center_vertical"
+                    android:orientation="horizontal">
+
+                    <com.google.android.material.button.MaterialButton
+                        android:id="@+id/englishLanguageButton"
+                        android:layout_width="0dp"
+                        android:layout_height="wrap_content"
+                        android:layout_weight="1"
+                        android:text="@string/language_english"
+                        android:textAllCaps="false"
+                        android:textColor="#FFFFFFFF"
+                        app:backgroundTint="#313847"
+                        app:cornerRadius="12dp"
+                        app:strokeColor="#515A6B"
+                        app:strokeWidth="1dp" />
+
+                    <com.google.android.material.button.MaterialButton
+                        android:id="@+id/germanLanguageButton"
+                        android:layout_width="0dp"
+                        android:layout_height="wrap_content"
+                        android:layout_marginStart="10dp"
+                        android:layout_weight="1"
+                        android:text="@string/language_german"
+                        android:textAllCaps="false"
+                        android:textColor="#FFFFFFFF"
+                        app:backgroundTint="#4A4F5E"
+                        app:cornerRadius="12dp"
+                        app:strokeColor="#6A7285"
+                        app:strokeWidth="1dp" />
+                </LinearLayout>
             </LinearLayout>
         </LinearLayout>
         </com.google.android.material.card.MaterialCardView>
