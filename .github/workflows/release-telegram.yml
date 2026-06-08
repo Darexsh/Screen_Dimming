@@ -43,7 +43,7 @@ jobs:
           fi
 
           DOWNLOAD_URL="$(jq -r '
-            .release.assets
+            .release.assets // []
             | map(.browser_download_url // "")
             | map(select(test("\\.apk(\\?|$)"; "i")))
             | .[0] // empty
