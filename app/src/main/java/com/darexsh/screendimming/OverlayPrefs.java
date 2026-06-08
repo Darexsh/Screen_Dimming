@@ -24,7 +24,11 @@ public final class OverlayPrefs {
 
     public static void setIntensityPercent(Context context, int value) {
         SharedPreferences prefs = context.getSharedPreferences(PREFS_NAME, Context.MODE_PRIVATE);
-        prefs.edit().putInt(KEY_INTENSITY_PERCENT, value).apply();
+        int sanitized = Math.max(0, Math.min(99, value));
+        if (prefs.getInt(KEY_INTENSITY_PERCENT, sanitized) == sanitized) {
+            return;
+        }
+        prefs.edit().putInt(KEY_INTENSITY_PERCENT, sanitized).apply();
     }
 
     public static int getFilterType(Context context, int defaultValue) {
@@ -34,7 +38,11 @@ public final class OverlayPrefs {
 
     public static void setFilterType(Context context, int filterType) {
         SharedPreferences prefs = context.getSharedPreferences(PREFS_NAME, Context.MODE_PRIVATE);
-        prefs.edit().putInt(KEY_FILTER_TYPE, sanitizeFilterType(filterType)).apply();
+        int sanitized = sanitizeFilterType(filterType);
+        if (prefs.getInt(KEY_FILTER_TYPE, sanitized) == sanitized) {
+            return;
+        }
+        prefs.edit().putInt(KEY_FILTER_TYPE, sanitized).apply();
     }
 
     public static int sanitizeFilterType(int filterType) {

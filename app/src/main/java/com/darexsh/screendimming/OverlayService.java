@@ -41,6 +41,7 @@ public class OverlayService extends Service {
 
     private static volatile boolean running;
 
+    private final OverlayRuntimeState runtimeState = new OverlayRuntimeState();
     private WindowManager windowManager;
     private View dimView;
     private int currentIntensity = 70;
@@ -116,10 +117,11 @@ public class OverlayService extends Service {
         }
 
         if (ACTION_START.equals(action)) {
+            currentIntensity = intensity;
+            currentFilterType = filterType;
             startForegroundIfNeeded();
             setupOverlayIfNeeded();
-            applyFilter(filterType);
-            applyIntensity(intensity);
+            applyOverlayState(intensity, filterType);
             OverlayPrefs.setIntensityPercent(this, intensity);
             OverlayPrefs.setFilterType(this, filterType);
             updateNotification();
@@ -131,8 +133,7 @@ public class OverlayService extends Service {
                 OverlayPrefs.setIntensityPercent(this, intensity);
                 return START_NOT_STICKY;
             }
-            startForegroundIfNeeded();
-            applyIntensity(intensity);
+            applyOverlayState(intensity, currentFilterType);
             OverlayPrefs.setIntensityPercent(this, intensity);
             updateNotification();
             return START_STICKY;
@@ -144,8 +145,7 @@ public class OverlayService extends Service {
                 currentFilterType = filterType;
                 return START_NOT_STICKY;
             }
-            startForegroundIfNeeded();
-            applyFilter(filterType);
+            applyOverlayState(currentIntensity, filterType);
             updateNotification();
             return START_STICKY;
         }
@@ -154,7 +154,7 @@ public class OverlayService extends Service {
             if (!running) {
                 return START_NOT_STICKY;
             }
-            applyIntensity(currentIntensity - NOTIFICATION_STEP);
+            applyOverlayState(currentIntensity - NOTIFICATION_STEP, currentFilterType);
             OverlayPrefs.setIntensityPercent(this, currentIntensity);
             updateNotification();
             return START_STICKY;
@@ -164,7 +164,7 @@ public class OverlayService extends Service {
             if (!running) {
                 return START_NOT_STICKY;
             }
-            applyIntensity(currentIntensity + NOTIFICATION_STEP);
+            applyOverlayState(currentIntensity + NOTIFICATION_STEP, currentFilterType);
             OverlayPrefs.setIntensityPercent(this, currentIntensity);
             updateNotification();
             return START_STICKY;
@@ -229,6 +229,9 @@ public class OverlayService extends Service {
     }
 
     private void startForegroundIfNeeded() {
+        if (runtimeState.isForegroundStarted()) {
+            return;
+        }
         createNotificationChannelIfNeeded();
         Notification notification = buildNotification();
         if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.Q) {
@@ -240,6 +243,8 @@ public class OverlayService extends Service {
         } else {
             startForeground(NOTIFICATION_ID, notification);
         }
+        runtimeState.markForegroundStarted();
+        runtimeState.recordNotificationIntensity(currentIntensity);
     }
 
     private Notification buildNotification() {
@@ -301,63 +306,54 @@ public class OverlayService extends Service {
     }
 
     private void teardownOverlay() {
+        if (dimView == null && windowManager == null && !running && !runtimeState.isForegroundStarted()) {
+            return;
+        }
         unregisterScreenStateReceiverIfNeeded();
         if (windowManager != null && dimView != null) {
             windowManager.removeView(dimView);
         }
+        stopForeground(true);
         dimView = null;
         windowManager = null;
         running = false;
+        runtimeState.reset();
         broadcastStateChanged(false);
     }
 
-    private void applyIntensity(int intensityPercent) {
+    private void applyOverlayState(int intensityPercent, int filterType) {
         if (dimView == null) {
             return;
         }
         currentIntensity = sanitizeIntensity(intensityPercent);
-        int alpha = Math.round((currentIntensity / 100f) * 255f);
+        currentFilterType = OverlayPrefs.sanitizeFilterType(filterType);
+        if (!runtimeState.recordOverlay(currentIntensity, currentFilterType)) {
+            broadcastStateChanged(running);
+            return;
+        }
         dimView.setAlpha(1f);
-        int color = getFilterColor(currentFilterType);
-        dimView.setBackgroundColor((alpha << 24) | (color & 0x00FFFFFF));
+        dimView.setBackgroundColor(runtimeState.getCurrentOverlayColor());
         broadcastStateChanged(running);
     }
 
-    private void applyFilter(int filterType) {
-        currentFilterType = OverlayPrefs.sanitizeFilterType(filterType);
-        applyIntensity(currentIntensity);
-    }
-
     private void updateNotification() {
+        if (!runtimeState.recordNotificationIntensity(currentIntensity)) {
+            return;
+        }
         NotificationManager manager = getSystemService(NotificationManager.class);
         if (manager != null) {
             manager.notify(NOTIFICATION_ID, buildNotification());
         }
     }
 
-    private int dpToPx(int dp) {
-        return Math.round(dp * getResources().getDisplayMetrics().density);
-    }
-
     private static int sanitizeIntensity(int intensityPercent) {
         return Math.max(0, Math.min(99, intensityPercent));
     }
 
-    private static int getFilterColor(int filterType) {
-        switch (OverlayPrefs.sanitizeFilterType(filterType)) {
-            case OverlayPrefs.FILTER_WARM:
-                return Color.rgb(48, 24, 0);
-            case OverlayPrefs.FILTER_RED:
-                return Color.rgb(38, 0, 0);
-            case OverlayPrefs.FILTER_BLUE:
-                return Color.rgb(0, 14, 34);
-            case OverlayPrefs.FILTER_BLACK:
-            default:
-                return Color.rgb(0, 0, 0);
-        }
-    }
-
     private void broadcastStateChanged(boolean isRunning) {
+        if (!runtimeState.recordBroadcast(isRunning, currentIntensity)) {
+            return;
+        }
         Intent stateIntent = new Intent(ACTION_STATE_CHANGED);
         stateIntent.setPackage(getPackageName());
         stateIntent.putExtra(EXTRA_RUNNING, isRunning);

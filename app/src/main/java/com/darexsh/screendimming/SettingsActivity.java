@@ -276,7 +276,7 @@ public class SettingsActivity extends AppCompatActivity {
     }
 
     private void showAppInfoDialog() {
-        String versionName = "1.0";
+        String versionName = "";
         try {
             versionName = getPackageManager().getPackageInfo(getPackageName(), 0).versionName;
         } catch (PackageManager.NameNotFoundException ignored) {

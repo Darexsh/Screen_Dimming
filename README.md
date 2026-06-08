@@ -8,7 +8,7 @@
 **An Android app for system-wide screen dimming with quick controls**  
 🌙☀️🎚️🔔
 
-![Project Status](https://img.shields.io/badge/Status-Active-brightgreen) ![License](https://img.shields.io/badge/License-NonCommercial-blue) ![Version](https://img.shields.io/badge/Version-1.0-orange)
+![Project Status](https://img.shields.io/badge/Status-Active-brightgreen) ![License](https://img.shields.io/badge/License-NonCommercial-blue) ![Version](https://img.shields.io/badge/Version-1.0.1-orange)
 
 [![Telegram Bot](https://img.shields.io/badge/Telegram-Bot-2AABEE?logo=telegram&logoColor=white)](https://t.me/darexsh_bot) [![Buy Me a Coffee](https://img.shields.io/badge/Buy%20Me%20a%20Coffee-yellow?logo=buy-me-a-coffee)](https://buymeacoffee.com/darexsh)  
 <sub>Get release updates on Telegram.<br>If you want to support more apps, you can leave a small donation for a coffee.</sub>
@@ -30,7 +30,7 @@
 🚀 About the Project
 ==============
 
-**Screen Dimming** is an Android application that places a dim color overlay across all apps to reduce brightness below the system minimum. It includes quick controls, notification actions, color filters, and safety mechanisms to avoid lockout.
+**Screen Dimming** is an Android application that places a dim color overlay across all apps to reduce brightness below the system minimum. It includes quick controls, notification actions, color filters, safety mechanisms to avoid lockout, and steady-state service optimizations to reduce unnecessary background work while dimming is active.
 
 * * *
 
@@ -48,6 +48,8 @@
 * 🔔 **Notification Controls**: Change intensity (`-5%` / `+5%`) or turn dimming off directly from the notification panel.
 
 * 📴 **Auto Safety Stop on Screen Off**: Dimming automatically turns off when the screen is turned off.
+
+* 🔋 **Reduced Service Overhead While Active**: Avoids redundant overlay updates, notification refreshes, broadcasts, and repeated preference writes when the dim state has not changed.
 
 * ⚙️ **Settings Screen**:
 
@@ -140,6 +142,11 @@
 
     * Open Settings for permission checks, color filter selection, language, and app info.
 
+6. **Power Behavior**:
+
+    * The app reduces unnecessary service work while active.
+    * A fullscreen system-wide dim overlay still has unavoidable GPU/compositor cost on Android, so battery usage depends on device and screen-on time.
+
 
 * * *
 
@@ -167,6 +174,10 @@
 * 🔔 Notification controls are implemented with **NotificationCompat** actions.
 
 * 🌍 Runtime language switching via **AppCompatDelegate locales**.
+
+* 🔋 Overlay, notification, and broadcast updates are **deduplicated** so unchanged state does not trigger extra work.
+
+* ⚠️ Because dimming is implemented as a **fullscreen system-wide overlay**, some power cost from display composition remains inherent to this approach.
 
 * * *
 
